@@ -10,7 +10,7 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      '/api': 'https://timeme.onrender.com/',
+      '/api': 'http://localhost:5000',
     },
   }
 })

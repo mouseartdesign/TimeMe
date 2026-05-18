@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import axios from 'axios';
+import api from '../config/api';
 import { X, FileText, Calendar, Clock, AlignLeft } from 'lucide-react';
 
 const NewTask = ({ onClose, onTaskAdded }) => {
@@ -12,7 +12,7 @@ const NewTask = ({ onClose, onTaskAdded }) => {
         e.preventDefault();
         try {
             const newTask = { title, description, scheduledDate, duration };
-            const response = await axios.post('/api/tasks', newTask);
+            const response = await api.post('/api/tasks', newTask);
             if (response.status === 201) {
                 onTaskAdded(response.data);
                 onClose();

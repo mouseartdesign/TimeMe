@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import axios from 'axios'
+import api from './config/api'
 import './App.css'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import Home from './pages/Home'
@@ -15,7 +15,7 @@ function App() {
 
   useEffect(() => {
     // Add a request interceptor to automatically add the auth token
-    const interceptor = axios.interceptors.request.use((config) => {
+    const interceptor = api.interceptors.request.use((config) => {
       const storedUser = JSON.parse(localStorage.getItem('user'));
       if (storedUser?.token) {
         config.headers.Authorization = `Bearer ${storedUser.token}`;
@@ -26,7 +26,7 @@ function App() {
     });
 
     return () => {
-      axios.interceptors.request.eject(interceptor);
+      api.interceptors.request.eject(interceptor);
     };
   }, []);
 

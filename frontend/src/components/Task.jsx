@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../config/api";
 import { Check, Trash2, PenLine, X, Clock, Calendar, AlertCircle, CheckCircle2, Timer } from "lucide-react";
 
 const STATUS_CONFIG = {
@@ -17,7 +17,7 @@ const Task = ({ refreshTrigger, showAll = false, filterStatus = 'all' }) => {
         const fetchTasks = async () => {
             try {
                 const endpoint = showAll ? '/api/tasks?all=true' : '/api/tasks';
-                const res = await axios.get(endpoint);
+                const res = await api.get(endpoint);
                 if (res.status === 200) setTasks(res.data);
             } catch (error) {
                 console.error('error fetching data', error);
@@ -38,7 +38,7 @@ const Task = ({ refreshTrigger, showAll = false, filterStatus = 'all' }) => {
     const handleDelete = async (id) => {
         if (!window.confirm("Delete this task?")) return;
         try {
-            await axios.delete(`/api/tasks/${id}`);
+            await api.delete(`/api/tasks/${id}`);
             setTasks(tasks.filter(t => t._id !== id));
         } catch (error) {
             console.error('Error deleting task', error);
@@ -47,7 +47,7 @@ const Task = ({ refreshTrigger, showAll = false, filterStatus = 'all' }) => {
 
     const handleComplete = async (id) => {
         try {
-            await axios.put(`/api/tasks/${id}/complete`);
+            await api.put(`/api/tasks/${id}/complete`);
             setTasks(tasks.map(t => t._id === id ? { ...t, isCompleted: true, status: 'completed' } : t));
         } catch (error) {
             console.error('Error completing task', error);
@@ -63,7 +63,7 @@ const Task = ({ refreshTrigger, showAll = false, filterStatus = 'all' }) => {
             scheduledDate: e.target.scheduledDate.value,
         };
         try {
-            const res = await axios.put(`/api/tasks/${id}`, updatedData);
+            const res = await api.put(`/api/tasks/${id}`, updatedData);
             const today = new Date(); today.setHours(0, 0, 0, 0);
             let newStatus = 'pending';
             if (res.data.isCompleted) {

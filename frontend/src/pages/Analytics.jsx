@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../config/api';
 import Navbar from '../components/Navbar';
 import Footbar from '../components/footbar';
 import {
@@ -180,7 +180,7 @@ const Analytics = () => {
     useEffect(() => {
         const load = async () => {
             try {
-                const res = await axios.get('/api/tasks?all=true');
+                const res = await api.get('/api/tasks?all=true');
                 setTasks(res.data || []);
             } catch (e) {
                 console.error(e);

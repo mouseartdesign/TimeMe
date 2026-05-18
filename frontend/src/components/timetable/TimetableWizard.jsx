@@ -47,8 +47,8 @@ const TimetableWizard = ({ onClose, onSaved, initialData, initialStep }) => {
                 }))
             };
 
-            const axios = (await import('axios')).default;
-            const res = await axios.post('/api/timetables', payload);
+            const api = (await import('../../config/api')).default;
+            const res = await api.post('/api/timetables', payload);
             if (res.status === 201) {
                 onSaved(res.data);
                 onClose();

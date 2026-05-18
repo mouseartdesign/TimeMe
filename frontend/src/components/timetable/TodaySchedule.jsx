@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../config/api';
 import { Clock, Calendar, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -24,7 +24,7 @@ const TodaySchedule = () => {
     useEffect(() => {
         const fetch = async () => {
             try {
-                const res = await axios.get('/api/timetables');
+                const res = await api.get('/api/timetables');
                 setTimetable(res.data);
             } catch (err) {
                 console.error(err);

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuthContext } from './useAuthContext';
-import axios from 'axios';
+import api from '../config/api';
 
 export const useSignup = () => {
     const [error, setError] = useState(null);
@@ -12,7 +12,7 @@ export const useSignup = () => {
         setError(null);
 
         try {
-            const response = await axios.post('/api/auth/signup', { name, email, password });
+            const response = await api.post('/api/auth/signup', { name, email, password });
             localStorage.setItem('user', JSON.stringify(response.data));
             dispatch({ type: 'LOGIN', payload: response.data });
             setIsLoading(false);

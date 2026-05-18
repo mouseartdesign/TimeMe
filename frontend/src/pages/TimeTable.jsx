@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../config/api';
 import Navbar from '../components/Navbar';
 import Footbar from '../components/footbar';
 import TimetableWizard from '../components/timetable/TimetableWizard';
@@ -14,7 +14,7 @@ const TimeTable = () => {
 
     const fetchTimetable = async () => {
         try {
-            const res = await axios.get('/api/timetables');
+            const res = await api.get('/api/timetables');
             setTimetable(res.data);
         } catch (err) {
             console.error('Failed to fetch timetable:', err);
@@ -32,7 +32,7 @@ const TimeTable = () => {
     const handleDelete = async () => {
         if (!confirm('Delete your timetable? This cannot be undone.')) return;
         try {
-            await axios.delete('/api/timetables');
+            await api.delete('/api/timetables');
             setTimetable(null);
         } catch (err) {
             console.error('Failed to delete:', err);
