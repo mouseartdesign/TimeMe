@@ -11,7 +11,7 @@ const timetableRouter = require('./routers/timetableRouter');
 const app = express();
 
 app.use(cors({
-  origin: "https://yourfrontend.vercel.app"
+  origin: "https://time-me.vercel.app"
 }));
 app.use(express.json()); // Parses incoming JSON requests
 
