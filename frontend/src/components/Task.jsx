@@ -12,6 +12,19 @@ const STATUS_CONFIG = {
 const Task = ({ refreshTrigger, showAll = false, filterStatus = 'all' }) => {
     const [tasks, setTasks] = useState([]);
     const [editingTask, setEditingTask] = useState(null);
+    const [timetables, setTimetables] = useState([]);
+
+    // Edit fields state
+    const [editStartTime, setEditStartTime] = useState('');
+    const [editEndTime, setEditEndTime] = useState('');
+    const [editReminderBefore, setEditReminderBefore] = useState(5);
+    const [editTimetableId, setEditTimetableId] = useState('');
+    const [editIsRecurring, setEditIsRecurring] = useState(false);
+    const [editFrequency, setEditFrequency] = useState('daily');
+    const [editCustomInterval, setEditCustomInterval] = useState(1);
+    const [editCustomType, setEditCustomType] = useState('days');
+    const [editCustomDaysOfWeek, setEditCustomDaysOfWeek] = useState([]);
+    const [editCustomDayOfMonth, setEditCustomDayOfMonth] = useState('');
 
     useEffect(() => {
         const fetchTasks = async () => {
@@ -25,6 +38,32 @@ const Task = ({ refreshTrigger, showAll = false, filterStatus = 'all' }) => {
         };
         fetchTasks();
     }, [refreshTrigger]);
+
+    useEffect(() => {
+        const fetchTimetables = async () => {
+            try {
+                const res = await api.get('/api/timetables?all=true');
+                if (res.status === 200) setTimetables(res.data);
+            } catch (err) {
+                console.error('Error fetching timetables:', err);
+            }
+        };
+        fetchTimetables();
+    }, []);
+
+    const startEditing = (task) => {
+        setEditingTask(task._id);
+        setEditStartTime(task.startTime || '');
+        setEditEndTime(task.endTime || '');
+        setEditReminderBefore(task.reminderBefore !== undefined ? task.reminderBefore : 5);
+        setEditTimetableId(task.timetableId || '');
+        setEditIsRecurring(task.isRecurring || false);
+        setEditFrequency(task.recurrenceRule?.frequency || 'daily');
+        setEditCustomInterval(task.recurrenceRule?.interval || 1);
+        setEditCustomType(task.recurrenceRule?.customType || 'days');
+        setEditCustomDaysOfWeek(task.recurrenceRule?.daysOfWeek || []);
+        setEditCustomDayOfMonth(task.recurrenceRule?.dayOfMonth !== undefined ? task.recurrenceRule.dayOfMonth : '');
+    };
 
     const getDaysLeft = (scheduledDateStr) => {
         if (!scheduledDateStr) return null;
@@ -61,6 +100,19 @@ const Task = ({ refreshTrigger, showAll = false, filterStatus = 'all' }) => {
             description: e.target.description.value,
             duration: e.target.duration.value,
             scheduledDate: e.target.scheduledDate.value,
+            taskDate: e.target.scheduledDate.value,
+            startTime: editStartTime || undefined,
+            endTime: editEndTime || undefined,
+            reminderBefore: editReminderBefore !== '' ? Number(editReminderBefore) : 5,
+            timetableId: editTimetableId || null,
+            isRecurring: editIsRecurring,
+            recurrenceRule: editIsRecurring ? {
+                frequency: editFrequency,
+                interval: editFrequency === 'custom' ? Number(editCustomInterval) : 1,
+                daysOfWeek: editFrequency === 'custom' && editCustomType === 'weeks' ? editCustomDaysOfWeek : [],
+                dayOfMonth: editFrequency === 'custom' && editCustomDayOfMonth !== '' ? Number(editCustomDayOfMonth) : undefined,
+                customType: editFrequency === 'custom' ? editCustomType : 'days'
+            } : undefined
         };
         try {
             const res = await api.put(`/api/tasks/${id}`, updatedData);
@@ -162,6 +214,145 @@ const Task = ({ refreshTrigger, showAll = false, filterStatus = 'all' }) => {
                                         className="w-24 px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     />
                                 </div>
+                                <div className="flex gap-2">
+                                    <div className="flex-1">
+                                        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Start Time</label>
+                                        <input
+                                            type="time"
+                                            value={editStartTime}
+                                            onChange={(e) => setEditStartTime(e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                    <div className="flex-1">
+                                        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">End Time</label>
+                                        <input
+                                            type="time"
+                                            value={editEndTime}
+                                            onChange={(e) => setEditEndTime(e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    <div className="flex-1">
+                                        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Reminder (mins before)</label>
+                                        <input
+                                            type="number"
+                                            value={editReminderBefore}
+                                            onChange={(e) => setEditReminderBefore(e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                    <div className="flex-1">
+                                        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Link Timetable</label>
+                                        <select
+                                            value={editTimetableId}
+                                            onChange={(e) => setEditTimetableId(e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        >
+                                            <option value="">None (Global)</option>
+                                            {timetables.map(t => (
+                                                <option key={t._id} value={t._id}>{t.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="border-t border-gray-100 pt-2">
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <input
+                                            type="checkbox"
+                                            id={`editIsRecurring-${task._id}`}
+                                            checked={editIsRecurring}
+                                            onChange={(e) => setEditIsRecurring(e.target.checked)}
+                                            className="w-3.5 h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                                        />
+                                        <label htmlFor={`editIsRecurring-${task._id}`} className="text-[10px] font-bold text-gray-700 uppercase tracking-wider cursor-pointer">Repeat Task</label>
+                                    </div>
+                                    {editIsRecurring && (
+                                        <div className="flex flex-col gap-2 bg-gray-50 p-2 rounded-lg border border-gray-200">
+                                            <div>
+                                                <label className="block text-[10px] font-bold text-gray-500 mb-0.5">Frequency</label>
+                                                <select
+                                                    value={editFrequency}
+                                                    onChange={(e) => setEditFrequency(e.target.value)}
+                                                    className="w-full px-2 py-1 border border-gray-200 rounded-md text-xs bg-white text-gray-900"
+                                                >
+                                                    <option value="daily">Daily</option>
+                                                    <option value="weekly">Weekly</option>
+                                                    <option value="monthly">Monthly</option>
+                                                    <option value="custom">Custom</option>
+                                                </select>
+                                            </div>
+                                            {editFrequency === 'custom' && (
+                                                <div className="flex flex-col gap-2">
+                                                    <div className="flex gap-1.5">
+                                                        <div className="flex-1">
+                                                            <label className="block text-[10px] font-bold text-gray-500 mb-0.5">Every</label>
+                                                            <input
+                                                                type="number"
+                                                                min="1"
+                                                                value={editCustomInterval}
+                                                                onChange={(e) => setEditCustomInterval(Number(e.target.value))}
+                                                                className="w-full px-2 py-1 border border-gray-200 rounded-md text-xs bg-white text-gray-900"
+                                                            />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <label className="block text-[10px] font-bold text-gray-500 mb-0.5">Unit</label>
+                                                            <select
+                                                                value={editCustomType}
+                                                                onChange={(e) => setEditCustomType(e.target.value)}
+                                                                className="w-full px-2 py-1 border border-gray-200 rounded-md text-xs bg-white text-gray-900"
+                                                            >
+                                                                <option value="days">Day(s)</option>
+                                                                <option value="weeks">Week(s)</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    {editCustomType === 'weeks' && (
+                                                        <div>
+                                                            <label className="block text-[10px] font-bold text-gray-500 mb-0.5">On Weekdays</label>
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
+                                                                    <button
+                                                                        type="button"
+                                                                        key={day}
+                                                                        onClick={() => {
+                                                                            if (editCustomDaysOfWeek.includes(day)) {
+                                                                                setEditCustomDaysOfWeek(editCustomDaysOfWeek.filter(d => d !== day));
+                                                                            } else {
+                                                                                setEditCustomDaysOfWeek([...editCustomDaysOfWeek, day]);
+                                                                            }
+                                                                        }}
+                                                                        className={`px-1.5 py-0.5 rounded text-[9px] font-bold border transition-all cursor-pointer ${
+                                                                            editCustomDaysOfWeek.includes(day)
+                                                                                ? 'bg-blue-600 text-white border-blue-600'
+                                                                                : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
+                                                                        }`}
+                                                                    >
+                                                                        {day.slice(0, 3)}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    <div>
+                                                        <label className="block text-[10px] font-bold text-gray-500 mb-0.5">Specific Day of Month (Optional)</label>
+                                                        <input
+                                                            type="number"
+                                                            min="1"
+                                                            max="31"
+                                                            value={editCustomDayOfMonth}
+                                                            onChange={(e) => setEditCustomDayOfMonth(e.target.value)}
+                                                            placeholder="e.g. 15"
+                                                            className="w-full px-2 py-1 border border-gray-200 rounded-md text-xs bg-white text-gray-900"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                                 <button type="submit" className="w-full bg-blue-600 text-white text-sm font-semibold py-2 rounded-xl hover:bg-blue-700 transition-all cursor-pointer">
                                     Save Changes
                                 </button>
@@ -183,19 +374,37 @@ const Task = ({ refreshTrigger, showAll = false, filterStatus = 'all' }) => {
                                         {cfg.label}
                                     </span>
                                 </div>
-
+ 
                                 {/* Meta */}
-                                <div className="flex items-center gap-3 mt-2.5">
+                                <div className="flex flex-wrap items-center gap-2 mt-2.5">
                                     {task.scheduledDate && (
                                         <div className="flex items-center gap-1 text-xs text-gray-500">
                                             <Calendar className="w-3 h-3" />
                                             {task.scheduledDate.slice(0, 10)}
                                         </div>
                                     )}
+                                    {task.startTime && (
+                                        <div className="flex items-center gap-1 text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-100">
+                                            <Clock className="w-3 h-3" />
+                                            {task.startTime} {task.endTime ? `- ${task.endTime}` : ''}
+                                        </div>
+                                    )}
                                     {task.duration && (
                                         <div className="flex items-center gap-1 text-xs text-gray-500">
                                             <Timer className="w-3 h-3" />
                                             {task.duration} min
+                                        </div>
+                                    )}
+                                    {task.isRecurring && (
+                                        <div className="flex items-center gap-1 text-xs font-semibold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-lg border border-purple-100">
+                                            <span>Repeat:</span>
+                                            <span className="capitalize">{task.recurrenceRule?.frequency}</span>
+                                        </div>
+                                    )}
+                                    {task.timetableId && (
+                                        <div className="flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-lg">
+                                            <span>Timetable:</span>
+                                            <span className="font-medium">{timetables.find(t => t._id === task.timetableId)?.name || 'Linked'}</span>
                                         </div>
                                     )}
                                     {daysLeftText && (
@@ -207,7 +416,7 @@ const Task = ({ refreshTrigger, showAll = false, filterStatus = 'all' }) => {
                                         </div>
                                     )}
                                 </div>
-
+ 
                                 {/* Actions */}
                                 <div className="flex items-center gap-1 mt-3 pt-3 border-t border-black/5">
                                     <button
@@ -217,7 +426,7 @@ const Task = ({ refreshTrigger, showAll = false, filterStatus = 'all' }) => {
                                         <Trash2 className="w-3.5 h-3.5" /> Delete
                                     </button>
                                     <button
-                                        onClick={() => setEditingTask(task._id)}
+                                        onClick={() => startEditing(task)}
                                         className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-500 hover:bg-white/60 transition-all cursor-pointer"
                                     >
                                         <PenLine className="w-3.5 h-3.5" /> Edit

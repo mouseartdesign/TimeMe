@@ -15,7 +15,9 @@ const TimetableWizard = ({ onClose, onSaved, initialData, initialStep }) => {
         activeDays: [],
         periods: [],
         categories: [],
-        schedule: []
+        schedule: [],
+        icon: '',
+        color: '#3B82F6'
     });
 
     const updateData = (partial) => setData(prev => ({ ...prev, ...partial }));
@@ -44,12 +46,21 @@ const TimetableWizard = ({ onClose, onSaved, initialData, initialStep }) => {
                     periodId: s.periodId,
                     categoryId: s.categoryId,
                     label: s.label
-                }))
+                })),
+                icon: finalData.icon || '',
+                color: finalData.color || '#3B82F6',
+                isDefault: finalData.isDefault || false
             };
 
             const api = (await import('../../config/api')).default;
-            const res = await api.post('/api/timetables', payload);
-            if (res.status === 201) {
+            let res;
+            if (finalData._id) {
+                res = await api.put(`/api/timetables/${finalData._id}`, payload);
+            } else {
+                res = await api.post('/api/timetables', payload);
+            }
+
+            if (res.status === 201 || res.status === 200) {
                 onSaved(res.data);
                 onClose();
             }

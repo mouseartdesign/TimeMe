@@ -9,6 +9,7 @@ import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Analytics from './pages/Analytics'
 import { useAuthContext } from './hooks/useAuthContext'
+import NotificationManager from './components/NotificationManager'
 
 function App() {
   const { user } = useAuthContext();
@@ -32,6 +33,7 @@ function App() {
 
   return (
     <Router>
+      {user && <NotificationManager />}
       <Routes>
         <Route path="/" element={user ? <Home /> : <Navigate to="/login" />} />
         <Route path="/tasks" element={user ? <AllTasks /> : <Navigate to="/login" />} />

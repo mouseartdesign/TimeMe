@@ -11,29 +11,62 @@ const TimeTable = () => {
     const [editMode, setEditMode] = useState(false);
     const [timetable, setTimetable] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [timetables, setTimetables] = useState([]);
+    const [selectedTimetableId, setSelectedTimetableId] = useState('');
 
-    const fetchTimetable = async () => {
+    const fetchTimetables = async (selectId = null) => {
         try {
-            const res = await api.get('/api/timetables');
-            setTimetable(res.data);
+            const res = await api.get('/api/timetables?all=true');
+            setTimetables(res.data);
+            if (res.data.length > 0) {
+                let activeId = selectId;
+                if (!activeId) {
+                    const defaultTable = res.data.find(t => t.isDefault);
+                    activeId = defaultTable ? defaultTable._id : res.data[0]._id;
+                }
+                setSelectedTimetableId(activeId);
+                const activeTable = res.data.find(t => t._id === activeId);
+                setTimetable(activeTable || null);
+            } else {
+                setSelectedTimetableId('');
+                setTimetable(null);
+            }
         } catch (err) {
-            console.error('Failed to fetch timetable:', err);
+            console.error('Failed to fetch timetables:', err);
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => { fetchTimetable(); }, []);
+    useEffect(() => { fetchTimetables(); }, []);
+
+    const handleSelectChange = (id) => {
+        setSelectedTimetableId(id);
+        const activeTable = timetables.find(t => t._id === id);
+        setTimetable(activeTable || null);
+    };
+
+    const handleSetDefault = async () => {
+        if (!selectedTimetableId) return;
+        try {
+            await api.put(`/api/timetables/${selectedTimetableId}/default`);
+            await fetchTimetables(selectedTimetableId);
+            alert('Homepage default timetable updated!');
+        } catch (err) {
+            console.error('Failed to set default:', err);
+        }
+    };
 
     const handleSaved = (saved) => {
-        setTimetable(saved);
+        fetchTimetables(saved._id);
     };
 
     const handleDelete = async () => {
-        if (!confirm('Delete your timetable? This cannot be undone.')) return;
+        if (!selectedTimetableId) return;
+        if (!confirm('Delete this timetable? This cannot be undone.')) return;
         try {
-            await api.delete('/api/timetables');
-            setTimetable(null);
+            await api.delete(`/api/timetables/${selectedTimetableId}`);
+            await fetchTimetables();
         } catch (err) {
             console.error('Failed to delete:', err);
         }
@@ -50,6 +83,50 @@ const TimeTable = () => {
                         </div>
                     ) : timetable ? (
                         <>
+                            {/* Timetable Switcher */}
+                            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-4">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <div className="flex items-center gap-3">
+                                        <div
+                                            className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
+                                            style={{ backgroundColor: timetable ? timetable.color + '22' : '#f3f4f6' }}
+                                        >
+                                            {timetable?.icon || '📅'}
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <h1 className="text-lg font-bold text-gray-900">{timetable?.name || 'My Timetable'}</h1>
+                                                {timetable?.isDefault && (
+                                                    <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-md text-[10px] font-bold uppercase tracking-wide border border-blue-100">
+                                                        Default
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-xs text-gray-500 mt-0.5">Switch or manage your timetables below</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <select
+                                            value={selectedTimetableId}
+                                            onChange={(e) => handleSelectChange(e.target.value)}
+                                            className="px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-900 bg-gray-50 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                        >
+                                            {timetables.map(t => (
+                                                <option key={t._id} value={t._id}>{t.name} {t.isDefault ? '(Default)' : ''}</option>
+                                            ))}
+                                        </select>
+                                        {!timetable?.isDefault && (
+                                            <button
+                                                onClick={handleSetDefault}
+                                                className="px-3 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+                                            >
+                                                Set Default
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
                             {/* Actions bar */}
                             <div className="flex justify-end gap-2 mb-4">
                                 <button
@@ -96,11 +173,15 @@ const TimeTable = () => {
                     onClose={() => { setIsWizardOpen(false); setEditMode(false); }}
                     onSaved={handleSaved}
                     initialData={editMode && timetable ? {
+                        _id: timetable._id,
                         name: timetable.name,
                         activeDays: timetable.activeDays,
                         periods: timetable.periods,
                         categories: timetable.categories,
-                        schedule: timetable.schedule || []
+                        schedule: timetable.schedule || [],
+                        icon: timetable.icon,
+                        color: timetable.color,
+                        isDefault: timetable.isDefault
                     } : null}
                     initialStep={editMode && timetable ? 3 : 0}
                 />

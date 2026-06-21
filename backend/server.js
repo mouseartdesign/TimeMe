@@ -21,8 +21,12 @@ app.use('/api/',userRouter)
 app.use('/api/timetables/', timetableRouter)
 
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.log(err));
+  .then(() => {
+    console.log("MongoDB connected");
+  })
+  .catch((err) => {
+    console.error("MongoDB connection error:", err);
+  });
 
 
 const PORT = process.env.PORT || 5000;
