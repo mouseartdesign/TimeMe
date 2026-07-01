@@ -4,10 +4,10 @@ import { Plus, Trash2 } from 'lucide-react';
 const PRESET_COLORS = [
     '#3B82F6', '#8B5CF6', '#EC4899', '#EF4444', '#F97316',
     '#EAB308', '#22C55E', '#14B8A6', '#06B6D4', '#6366F1',
-    '#A855F7', '#F43F5E', '#64748B', '#0EA5E9', '#D946EF'
+    '#A855F7', '#F43F5E', '#64748B', '#D946EF'
 ];
 
-const ICONS = ['📚', '☕', '💼', '🏋️', '🙏', '🎨', '🎵', '💻', '📝', '🔬', '🧮', '🌐', '🍽️', '😴', '🎮'];
+const ICONS = ['📚', '☕', '💼', '🏋️', '🙏', '🎨', '🎵', '💻', '📝', '🔬', '🧮', '🌐', '🍽️', '😴'];
 
 const StepCategories = ({ data, onUpdate, onNext, onBack }) => {
     const [categories, setCategories] = useState(
